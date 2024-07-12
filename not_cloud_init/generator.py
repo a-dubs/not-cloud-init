@@ -76,10 +76,18 @@ def create_cloud_init_config(
         # merge cc_dict into cloud_config
         cloud_config.update(cc_dict)
 
-    if "user" not in disabled_configs and cloud_config["users"] and cloud_config["users"][0]["shell"] == "/usr/bin/zsh":
-        if not "zsh" in cloud_config.get("packages", []):
+    # if user has zsh as shell, add zsh to list of packages so that it can actually be used
+    if (
+        "user" not in disabled_configs 
+        and cloud_config.get("users") is not None 
+        and cloud_config["users"][0]["shell"] == "/usr/bin/zsh"
+        ):
+        if "zsh" not in cloud_config.get("packages", []):
             LOG.debug("User has zsh as shell, so adding zsh to list of packages.")
+            if "packages" not in cloud_config:
+                cloud_config["packages"] = []
             cloud_config["packages"].append("zsh")
+    
     LOG.info("Done gathering data for all not-cloud-init modules")
     with open(f"{output_path}", "w") as f:
         f.write("#cloud-config\n")
